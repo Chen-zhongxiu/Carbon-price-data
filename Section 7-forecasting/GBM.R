@@ -173,6 +173,7 @@ print(results)
 
 # =====================Three-step out-of-sample forecasting (price space)=================
 # Here assume prices is a price vector, e.g., stock closing prices
+data1 = read.csv("EUA.csv")
 log_prices <- log(data1$收盘价)[1:(nrow(data1)-3)]
 # Note: delta is the time step, e.g., daily = 1/252
 data <- setData(log_prices, delta = 1/252)
