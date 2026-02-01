@@ -355,7 +355,7 @@ time_fit <- system.time({fit0 <- em_fit_jump_mixture_rn_batch_global(
   lambda_init = lambda_init,
   mu_beta_init = mu_beta_init,
   s_beta_init  = s_beta_init,
-  n_batch = 243,
+  n_batch = 210,
   esscher_theta = 0,
   verbose = FALSE
 )
