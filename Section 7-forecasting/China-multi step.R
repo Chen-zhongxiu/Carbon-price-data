@@ -20,6 +20,60 @@ fit_to_paramsA_offline <- function(fit, dt = 1, N_state = 2) {
 ##    to obtain the predictive distribution of z_{t0}
 ##    Here z_t = (y_{t-1}, y_t), and dx_t is driven by y_t (consistent with your current code)
 ###########################################################
+forward_filter_mixture_rn <- function(dx, A, params, N,
+                                      dt = 1, base_sd = 1,
+                                      esscher_theta = 0,
+                                      init_logpi = NULL) {
+  Tn <- length(dx)
+  M  <- N * N
+  logA <- log(pmax(A, 1e-300))
+  
+  # 观测增量在各扩展状态下的 log φ_k(i)
+  logB   <- matrix(NA_real_, M, Tn)
+  log_gv <- numeric(Tn)
+  for (t in 1:Tn) {
+    tmp <- emit_logrn_mixture(dx[t], params, N,
+                              dt = dt, base_sd = base_sd,
+                              esscher_theta = esscher_theta)
+    logB[, t] <- tmp$log_phi
+    log_gv[t] <- tmp$log_g
+  }
+  
+  # forward 递推
+  log_alpha <- matrix(-Inf, M, Tn)
+  cvec      <- numeric(Tn)
+  
+  if (is.null(init_logpi)) {
+    log_alpha[, 1] <- -log(M) + logB[, 1]
+  } else {
+    log_alpha[, 1] <- init_logpi + logB[, 1]
+  }
+  m1 <- max(log_alpha[, 1])
+  s1 <- sum(exp(log_alpha[, 1] - m1))
+  cvec[1] <- m1 + log(s1)
+  log_alpha[, 1] <- log_alpha[, 1] - cvec[1]
+  
+  for (t in 2:Tn) {
+    tmp <- matrix(log_alpha[, t-1], nrow = M, ncol = M, byrow = TRUE) + logA
+    logsum <- apply(tmp, 1, function(x) {
+      m <- max(x); m + log(sum(exp(x - m)))
+    })
+    log_alpha[, t] <- logB[, t] + logsum
+    mt <- max(log_alpha[, t])
+    st <- sum(exp(log_alpha[, t] - mt))
+    cvec[t] <- mt + log(st)
+    log_alpha[, t] <- log_alpha[, t] - cvec[t]
+  }
+  
+  # 过滤后验：gamma_filt[,t] = P(z_t | x_1,...,x_t)
+  gamma_filt <- exp(log_alpha)    # 每一列已经归一化了
+  
+  list(
+    gamma_filt = gamma_filt,      # M x Tn, 扩展状态过滤后验
+    loglik_P   = sum(cvec)
+  )
+}
+
 get_pred_z_t0 <- function(X_full_log, t0, A_hat, params_hat, N_state, dt = 1) {
   # t0 is the index of the price series (1..T_all)
   # Need history up to t0: dx_hist = diff(X[1:t0]), length t0-1
