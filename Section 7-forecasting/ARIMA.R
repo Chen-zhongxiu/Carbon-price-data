@@ -148,6 +148,9 @@ print(results)
 # =====================Three-step out-of-sample forecasting (price space)=================
 
 # Set training and test data
+data1 = read.csv("EUA.csv")
+X= data1$log_price
+price=data1$price
 train <- X[1:(length(X) - 3)]
 test <- X[(length(X) - 2):length(X)]   # Last three points for the test set
 train_price <- price[1:(length(price) - 3)]
