@@ -1,0 +1,1 @@
+This repository contains carbon price datasets and the code used in Sections 5–7 of the manuscript "Modelling carbon price dynamics with jump-diffusion and higher-order hidden Markov switching: Theory, filtering, and forecasting".
