@@ -834,6 +834,6 @@ my_algo <- function() {
 }
 
 system.time( my_algo() )
-
+mc_res = my_algo()
 cat("\n===== Monte Carlo Summary =====\n")
 print(mc_res$table)
